@@ -7,6 +7,11 @@
     <groupId>tkidman.tracar</groupId>
     <artifactId>tracar</artifactId>
     <version>1.0-SNAPSHOT</version>
-
-
+    <dependencies>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.8.7</version>
+        </dependency>
+    </dependencies>
 </project>

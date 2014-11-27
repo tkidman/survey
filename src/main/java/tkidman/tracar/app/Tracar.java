@@ -9,7 +9,6 @@ import tkidman.tracar.domain.Observation;
 import tkidman.tracar.domain.Survey;
 
 public class Tracar {
-    private static final int MILLIS_IN_HOUR = 3600000;
 
     public Survey loadSurvey() {
         try {
@@ -78,8 +77,17 @@ public class Tracar {
 
             // perform our approximate speed calculation
             // millis to travel 2.5 meters.
-            double speedInKPH = (MILLIS_IN_HOUR / (millisSinceMidnightSecondA - millisSinceMidnightFirstA)) * 0.0025;
-            return new Observation(day, millisSinceMidnightFirstA, directionA, speedInKPH, previous);
+            double speedInKmph = (Survey.MILLIS_IN_HOUR / (millisSinceMidnightSecondA - millisSinceMidnightFirstA)) * 0.0025;
+
+            // now calculate our distance from the car in front
+            double metresBehindPrevious = 0;
+            if (previous != null) {
+                long differenceInTimeMills = millisSinceMidnightFirstA - previous.getObservationTimeMillis() + (day - previous.getDay() * Survey.MILLIS_IN_DAY);
+                // so how far would be traveled over the difference in time by the second car at the speed when it made the obs?
+                metresBehindPrevious = (speedInKmph / (Survey.MILLIS_IN_HOUR / differenceInTimeMills)) * 1000;
+            }
+
+            return new Observation(day, millisSinceMidnightFirstA, directionA, speedInKmph, metresBehindPrevious);
         }
     }
 }
