@@ -2,50 +2,58 @@ package tkidman.tracar.domain;
 
 import java.util.ArrayList;
 
-public abstract class ObservationGroup {
+/**
+ * Used to aggregate observations over a time period.
+ */
+public class ObservationGroup {
 
-    protected int day;
-    protected int periodStartMillis;
-    protected long carCount;
-    protected double speedTotal;
+    public ObservationGroupType getObservationGroupType() {
+        return observationGroupType;
+    }
 
-    protected ObservationGroup previous;
-    protected ObservationGroup next;
-    protected ObservationGroup parent;
-    protected ArrayList<ObservationGroup> children = new ArrayList<>();
+    public long getCarCount() {
+        return carCount;
+    }
 
-    protected boolean initialised = false;
+    public enum ObservationGroupType {
+        FIFTEEN_MINUTES(Survey.MILLIS_IN_MINUTE * 15),
+        TWENTY_MINUTES(Survey.MILLIS_IN_MINUTE * 20);
 
-    public ObservationGroup(final ObservationGroup previous) {
-        if (previous == null) {
-            this.day = 1;
-            this.periodStartMillis = 0;
-        } else {
-            previous.next = this;
-            this.periodStartMillis = previous.getPeriodEndMillis() + 1;
-            this.day = previous.day;
-            if (this.periodStartMillis >= Survey.MILLIS_IN_DAY) {
-                this.day++;
-                // TODO does this have to be 0?
-                this.periodStartMillis = 0;
-            }
-        }
+        private int periodLengthMillis;
 
-        this.previous = previous;
-        if (shouldHaveParent()) {
-            if (previous == null || previous.parent.endsBefore(this)) {
-                // need to create a new parent
-                parent = createParent();
-            } else {
-                parent = previous.parent;
-            }
-            parent.children.add(this);
+        ObservationGroupType(final int periodLengthMillis) {
+            this.periodLengthMillis = periodLengthMillis;
         }
     }
 
-    public abstract ObservationGroup createParent();
+    private int day;
+    private int periodStartMillis;
+    private long carCount;
+    private long carCountA;
+    private double speedTotal;
+    private ArrayList<Observation> observations = new ArrayList<>();
+    private ObservationGroupType observationGroupType;
 
-    protected abstract int getPeriodLengthMillis();
+    public ObservationGroup(final ObservationGroupType observationGroupType) {
+        this.observationGroupType = observationGroupType;
+        this.day = 1;
+        this.periodStartMillis = 0;
+    }
+
+    public ObservationGroup(final ObservationGroup previous) {
+        this.observationGroupType = previous.observationGroupType;
+        this.periodStartMillis = previous.getPeriodEndMillis() + 1;
+        this.day = previous.day;
+        if (this.periodStartMillis >= Survey.MILLIS_IN_DAY) {
+            this.day++;
+            // TODO does this have to be 0?
+            this.periodStartMillis = 0;
+        }
+    }
+
+    public int getPeriodLengthMillis() {
+        return observationGroupType.periodLengthMillis;
+    }
 
     protected int getPeriodEndMillis() {
         return periodStartMillis + getPeriodLengthMillis() - 1;
@@ -55,121 +63,17 @@ public abstract class ObservationGroup {
         return day < observationGroup.day || (day == observationGroup.day && getPeriodEndMillis() < observationGroup.getPeriodEndMillis());
     }
 
-    public ObservationGroup getNext() {
-        return next;
-    }
+    /**
+     * Returns false if this observation can't be added to this group.
+     */
+    public boolean add(Observation observation) {
+        if (observation.getDay() == this.day && observation.getObservationTimeMillis() <= getPeriodEndMillis()) {
+            observations.add(observation);
+            carCount++;
 
-    public ObservationGroup getParent() {
-        return parent;
-    }
-
-    protected ObservationGroup getPreviousParent() {
-        return this.previous == null ? null : this.previous.parent;
-    }
-
-    protected boolean shouldHaveParent() {
-        return true;
-    }
-
-    protected void initialise() {
-        if (!initialised) {
-            for (ObservationGroup child : children) {
-                child.initialise();
-                this.carCount += child.carCount;
-                this.speedTotal += child.speedTotal;
-            }
+            speedTotal += observation.getSpeedInKPH();
+            return true;
         }
-        initialised = true;
-    }
-
-    public long getCarCount() {
-        if (!initialised) {
-            initialise();
-        }
-        return carCount;
-    }
-
-    public double getSpeedTotal() {
-        if (!initialised) {
-            initialise();
-        }
-        return speedTotal;
-    }
-
-    public static final class FiveMinuteObservationGroup extends ObservationGroup {
-        private static final int PERIOD_LENGTH_MILLIS = Survey.MILLIS_IN_MINUTE * 5;
-        private ArrayList<Observation> observations = new ArrayList<>();
-
-        public FiveMinuteObservationGroup(ObservationGroup previous) {
-            super(previous);
-            initialised = true;
-        }
-
-        @Override
-        public ObservationGroup createParent() {
-            return new FifteenMinuteObservationGroup(getPreviousParent());
-        }
-
-        @Override
-        protected int getPeriodLengthMillis() {
-            return PERIOD_LENGTH_MILLIS;
-        }
-
-        public boolean add(Observation observation) {
-            if (observation.getDay() == this.day && observation.getObservationTimeMillis() <= getPeriodEndMillis()) {
-                observations.add(observation);
-                carCount++;
-                speedTotal += observation.getSpeedInKPH();
-                return true;
-            }
-            return false;
-        }
-
-    }
-
-    public static final class FifteenMinuteObservationGroup extends ObservationGroup {
-        private static final int PERIOD_LENGTH_MILLIS = Survey.MILLIS_IN_MINUTE * 15;
-
-        public FifteenMinuteObservationGroup(ObservationGroup previous) {
-            super(previous);
-        }
-
-        @Override
-        public ObservationGroup createParent() {
-            return null; //new FifteenMinuteObservationGroup;
-        }
-
-        @Override
-        public int getPeriodLengthMillis() {
-            return PERIOD_LENGTH_MILLIS;
-        }
-
-        @Override
-        protected boolean shouldHaveParent() {
-            return false;
-        }
-    }
-
-    public static final class ThirtyMinuteObservationGroup extends ObservationGroup {
-        private static final int PERIOD_LENGTH_MILLIS = Survey.MILLIS_IN_MINUTE * 30;
-
-        public ThirtyMinuteObservationGroup(ObservationGroup previous) {
-            super(previous);
-        }
-
-        @Override
-        public ObservationGroup createParent() {
-            return null; //new FifteenMinuteObservationGroup;
-        }
-
-        @Override
-        public int getPeriodLengthMillis() {
-            return PERIOD_LENGTH_MILLIS;
-        }
-
-        @Override
-        protected boolean shouldHaveParent() {
-            return false;
-        }
+        return false;
     }
 }
