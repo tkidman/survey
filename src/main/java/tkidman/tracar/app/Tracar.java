@@ -1,33 +1,47 @@
 package tkidman.tracar.app;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.stream.Stream;
 
 import tkidman.tracar.domain.Observation;
 import tkidman.tracar.domain.Survey;
 
 public class Tracar {
 
-    public Survey loadSurvey() {
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader("filename"));
-            RawObservation rawObservation = new RawObservation();
-            ArrayList<Observation> observations = new ArrayList<>();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                if (rawObservation.processLine(line)) {
-                    // raw observation is complete, we can create a proper observation now.
-                    final Observation previous = observations.size() > 0 ? observations.get(observations.size() - 1) : null;
-                    observations.add(rawObservation.createObservation(previous));
-                }
-            }
+    public static void main(String[] args) {
+        new Tracar().createReport();
+    }
 
-            // create our survey
-            return new Survey(observations);
+    public void createReport() {
+        try {
+            Stream<String> lines = Files.lines(Paths.get("Vehicle Survey Coding Challenge sample data.txt"));
+            Survey survey = loadSurvey(lines);
+            new CsvReport().report(survey);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public Survey loadSurvey(Stream<String> lines) {
+        RawObservationReference rawObservationReference = new RawObservationReference();
+        rawObservationReference.rawObservation = new RawObservation();
+        ArrayList<Observation> observations = new ArrayList<>();
+        lines.forEach(line -> processLine(line, rawObservationReference, observations));
+
+        // create our survey
+        return new Survey(observations);
+    }
+
+    private void processLine(String line, RawObservationReference rawObservationReference, ArrayList<Observation> observations) {
+        if (rawObservationReference.rawObservation.processLine(line)) {
+            // raw observation is complete, we can create a proper observation now.
+            final Observation previous = observations.size() > 0 ? observations.get(observations.size() - 1) : null;
+            Observation newObservation = rawObservationReference.rawObservation.createObservation(previous);
+            observations.add(newObservation);
+            rawObservationReference.rawObservation = new RawObservation();
         }
     }
 
@@ -48,7 +62,7 @@ public class Tracar {
                 if (firstB == null) {
                     firstB = line;
                 } else {
-                    secondB = null;
+                    secondB = line;
                 }
             }
             if (firstA != null && secondA != null) {
@@ -63,11 +77,9 @@ public class Tracar {
             boolean directionA = firstB == null;
             int millisSinceMidnightFirstA = Integer.parseInt(firstA.substring(1));
             int millisSinceMidnightSecondA = Integer.parseInt(secondA.substring(1));
-            int day;
+            int day = 0;
 
-            if (previous == null) {
-                day = 1;
-            } else {
+            if  (previous != null) {
                 if (previous.getObservationTimeMillis() >= millisSinceMidnightFirstA) {
                     day = previous.getDay() + 1;
                 } else {
@@ -82,12 +94,16 @@ public class Tracar {
             // now calculate our distance from the car in front
             double metresBehindPrevious = 0;
             if (previous != null) {
-                long differenceInTimeMills = millisSinceMidnightFirstA - previous.getObservationTimeMillis() + (day - previous.getDay() * Survey.MILLIS_IN_DAY);
-                // so how far would be traveled over the difference in time by the second car at the speed when it made the obs?
-                metresBehindPrevious = (speedInKmph / (Survey.MILLIS_IN_HOUR / differenceInTimeMills)) * 1000;
+                long differenceInTimeMillis = millisSinceMidnightFirstA - previous.getObservationTimeMillis() + (day - previous.getDay() * Survey.MILLIS_IN_DAY);
+                // so how far would be travelled over the difference in time by the second car at the speed when it made the obs?
+                metresBehindPrevious = (speedInKmph / (Survey.MILLIS_IN_HOUR / differenceInTimeMillis)) * 1000;
             }
 
             return new Observation(day, millisSinceMidnightFirstA, directionA, speedInKmph, metresBehindPrevious);
         }
+    }
+
+    private class RawObservationReference {
+        private RawObservation rawObservation;
     }
 }

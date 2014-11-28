@@ -4,14 +4,14 @@ public class Observation {
     private final int day;
     private final long observationTimeMillis;
     private final boolean directionA;
-    private final double speedInKPH;
+    private final double speedInKmph;
     private final double metresBehind;
 
-    public Observation(final int day, final long observationTimeMillis, final boolean directionA, final double speedInKPH, final double metresBehindPrevious) {
+    public Observation(final int day, final long observationTimeMillis, final boolean directionA, final double speedInKmph, final double metresBehindPrevious) {
         this.day = day;
         this.observationTimeMillis = observationTimeMillis;
         this.directionA = directionA;
-        this.speedInKPH = speedInKPH;
+        this.speedInKmph = speedInKmph;
         this.metresBehind = metresBehindPrevious;
     }
 
@@ -23,7 +23,15 @@ public class Observation {
         return day;
     }
 
-    public double getSpeedInKPH() {
-        return speedInKPH;
+    public double getSpeedInKmph() {
+        return speedInKmph;
+    }
+
+    public boolean isDirectionA() {
+        return directionA;
+    }
+
+    public double getMetresBehind() {
+        return metresBehind;
     }
 }

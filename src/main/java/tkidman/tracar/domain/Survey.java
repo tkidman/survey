@@ -1,6 +1,7 @@
 package tkidman.tracar.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class Survey {
@@ -10,29 +11,15 @@ public class Survey {
     public static final int MILLIS_IN_DAY = MILLIS_IN_HOUR * 24;
 
     private ArrayList<Observation> observations;
-    private ArrayList<ObservationGroup> fifteenMinuteGroups = new ArrayList<>();
-    private ArrayList<ObservationGroup> twentyMinuteGroups = new ArrayList<>();
-    private ArrayList<ObservationGroup> thirtyMinuteGroups = new ArrayList<>();
-    private ArrayList<ObservationGroup> hourGroups = new ArrayList<>();
-    private ArrayList<ObservationGroup> dayGroups = new ArrayList<>();
-
     private HashMap<ObservationGroup.ObservationGroupType, ArrayList<ObservationGroup>> allGroups = new HashMap<>();
 
     public Survey(ArrayList<Observation> observations) {
-        fifteenMinuteGroups.add(new ObservationGroup(ObservationGroup.ObservationGroupType.FIFTEEN_MINUTES));
-        allGroups.put(ObservationGroup.ObservationGroupType.FIFTEEN_MINUTES, fifteenMinuteGroups);
+        for (ObservationGroup.ObservationGroupType observationGroupType : ObservationGroup.ObservationGroupType.values()) {
+            ArrayList<ObservationGroup> groups = new ArrayList<>();
+            groups.add(new ObservationGroup(observationGroupType));
+            allGroups.put(observationGroupType, groups);
 
-        twentyMinuteGroups.add(new ObservationGroup(ObservationGroup.ObservationGroupType.TWENTY_MINUTES));
-        allGroups.put(ObservationGroup.ObservationGroupType.TWENTY_MINUTES, twentyMinuteGroups);
-//
-//        fifteenMinuteGroups.add(new ObservationGroup(ObservationGroup.ObservationGroupType.FIFTEEN_MINUTES));
-//        allGroups.add(fifteenMinuteGroups);
-//
-//        fifteenMinuteGroups.add(new ObservationGroup(ObservationGroup.ObservationGroupType.FIFTEEN_MINUTES));
-//        allGroups.add(fifteenMinuteGroups);
-//
-//        fifteenMinuteGroups.add(new ObservationGroup(ObservationGroup.ObservationGroupType.FIFTEEN_MINUTES));
-//        allGroups.add(fifteenMinuteGroups);
+        }
 
         this.observations = observations;
         for (Observation observation : observations) {
@@ -42,6 +29,7 @@ public class Survey {
                 while (!latestObservationGroup.add(observation)) {
                     // we need to create a new group to handle this observation.
                     ObservationGroup observationGroup = new ObservationGroup(latestObservationGroup);
+                    System.out.println("Creating new " + observationGroup.getObservationGroupType() + " group for observation: " + observation.getDay() + " " + observation.getObservationTimeMillis() + ", new group start: " + observationGroup.getTimeReadable());
                     groups.add(observationGroup);
                     latestObservationGroup = observationGroup;
                 }
@@ -52,4 +40,28 @@ public class Survey {
     public ArrayList<ObservationGroup> getObservationGroups(ObservationGroup.ObservationGroupType groupType) {
         return allGroups.get(groupType);
     }
+
+    public ArrayList<ObservationGroup> getAverageOverDaysObservationGroups(ObservationGroup.ObservationGroupType groupType) {
+        ArrayList<ObservationGroup> observationGroups = allGroups.get(groupType);
+        HashMap<Integer, ObservationGroup> summedObservationGroups = new HashMap<>();
+        // get the number of days, which we'll need to calculate the average across all days.  Just use the last observation group for this.
+        int numDays = observationGroups.get(observationGroups.size() - 1).getDay() + 1;
+        for (ObservationGroup observationGroup : observationGroups) {
+            ObservationGroup summedObservationGroup = summedObservationGroups.get(observationGroup.getPeriodStartMillis());
+            if (summedObservationGroup == null) {
+                summedObservationGroup = new ObservationGroup(observationGroup.getObservationGroupType());
+                summedObservationGroups.put(observationGroup.getPeriodStartMillis(), summedObservationGroup);
+            }
+            summedObservationGroup.add(observationGroup);
+        }
+
+        ArrayList<ObservationGroup> averageObservationGroups = new ArrayList<>();
+        for (ObservationGroup observationGroup : summedObservationGroups.values()) {
+            averageObservationGroups.add(observationGroup.divide(numDays));
+        }
+        Collections.sort(averageObservationGroups);
+        return averageObservationGroups;
+    }
+
+
 }

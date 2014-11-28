@@ -16,7 +16,7 @@ public class SurveyTest {
        Survey survey = new Survey(observations);
        ArrayList<ObservationGroup> groups = survey.getObservationGroups(ObservationGroup.ObservationGroupType.FIFTEEN_MINUTES);
 
-       // we should have 3 five minute groups, with 1 observation in the 1st and 3rd groups.
+       // we should have 3 fifteen minute groups, with 1 observation in the 1st and 3rd groups.
        Assert.assertEquals(groups.size(), 3);
        for (int i = 1; i < groups.size(); i++) {
            if (i == 1) {
@@ -27,7 +27,7 @@ public class SurveyTest {
        }
 
        groups = survey.getObservationGroups(ObservationGroup.ObservationGroupType.TWENTY_MINUTES);
-       // we should have 2 fifteen minute groups, with 1 observation in each
+       // we should have 2 twenty minute groups, with 1 observation in each
        Assert.assertEquals(groups.size(), 2);
        for (ObservationGroup group : groups) {
            Assert.assertTrue(group.getCarCount() == 1);

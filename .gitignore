@@ -5,3 +5,6 @@ target
 *.ipr
 *.iws
 .idea
+
+*.csv
+.~lock*
