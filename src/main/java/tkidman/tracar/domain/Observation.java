@@ -1,13 +1,13 @@
 package tkidman.tracar.domain;
 
-public class Observation {
+public class Observation implements Comparable<Observation> {
     private final int day;
-    private final long observationTimeMillis;
+    private final int observationTimeMillis;
     private final boolean directionA;
     private final double speedInKmph;
     private final double metresBehind;
 
-    public Observation(final int day, final long observationTimeMillis, final boolean directionA, final double speedInKmph, final double metresBehindPrevious) {
+    public Observation(final int day, final int observationTimeMillis, final boolean directionA, final double speedInKmph, final double metresBehindPrevious) {
         this.day = day;
         this.observationTimeMillis = observationTimeMillis;
         this.directionA = directionA;
@@ -33,5 +33,11 @@ public class Observation {
 
     public double getMetresBehind() {
         return metresBehind;
+    }
+
+
+    @Override
+    public int compareTo(final Observation o) {
+        return new Integer(day * Survey.MILLIS_IN_DAY + observationTimeMillis).compareTo(o.day * Survey.MILLIS_IN_DAY + o.observationTimeMillis);
     }
 }

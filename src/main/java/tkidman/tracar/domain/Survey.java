@@ -5,6 +5,10 @@ import java.util.Collections;
 import java.util.HashMap;
 
 public class Survey {
+    public enum DirectionOption {
+        A, B, BOTH;
+    }
+
     public static final int MILLIS_IN_SECOND = 1000;
     public static final int MILLIS_IN_MINUTE = MILLIS_IN_SECOND * 60;
     public static final int MILLIS_IN_HOUR = MILLIS_IN_MINUTE * 60;
@@ -14,6 +18,7 @@ public class Survey {
     private HashMap<ObservationGroup.ObservationGroupType, ArrayList<ObservationGroup>> allGroups = new HashMap<>();
 
     public Survey(ArrayList<Observation> observations) {
+        Collections.sort(observations);
         for (ObservationGroup.ObservationGroupType observationGroupType : ObservationGroup.ObservationGroupType.values()) {
             ArrayList<ObservationGroup> groups = new ArrayList<>();
             groups.add(new ObservationGroup(observationGroupType));
@@ -29,7 +34,7 @@ public class Survey {
                 while (!latestObservationGroup.add(observation)) {
                     // we need to create a new group to handle this observation.
                     ObservationGroup observationGroup = new ObservationGroup(latestObservationGroup);
-                    System.out.println("Creating new " + observationGroup.getObservationGroupType() + " group for observation: " + observation.getDay() + " " + observation.getObservationTimeMillis() + ", new group start: " + observationGroup.getTimeReadable());
+                    System.out.println("Creating new " + observationGroup.getName() + " group for observation: " + observation.getDay() + " " + observation.getObservationTimeMillis() + ", new group start: " + observationGroup.getTimeReadable());
                     groups.add(observationGroup);
                     latestObservationGroup = observationGroup;
                 }
@@ -44,24 +49,77 @@ public class Survey {
     public ArrayList<ObservationGroup> getAverageOverDaysObservationGroups(ObservationGroup.ObservationGroupType groupType) {
         ArrayList<ObservationGroup> observationGroups = allGroups.get(groupType);
         HashMap<Integer, ObservationGroup> summedObservationGroups = new HashMap<>();
-        // get the number of days, which we'll need to calculate the average across all days.  Just use the last observation group for this.
-        int numDays = observationGroups.get(observationGroups.size() - 1).getDay() + 1;
         for (ObservationGroup observationGroup : observationGroups) {
             ObservationGroup summedObservationGroup = summedObservationGroups.get(observationGroup.getPeriodStartMillis());
             if (summedObservationGroup == null) {
-                summedObservationGroup = new ObservationGroup(observationGroup.getObservationGroupType());
+                summedObservationGroup = new ObservationGroup().initialiseForAverage(observationGroup);
                 summedObservationGroups.put(observationGroup.getPeriodStartMillis(), summedObservationGroup);
             }
-            summedObservationGroup.add(observationGroup);
+            summedObservationGroup.plus(observationGroup);
         }
 
         ArrayList<ObservationGroup> averageObservationGroups = new ArrayList<>();
         for (ObservationGroup observationGroup : summedObservationGroups.values()) {
-            averageObservationGroups.add(observationGroup.divide(numDays));
+            observationGroup.divide(getSurveyLengthDays());
+            averageObservationGroups.add(observationGroup);
         }
         Collections.sort(averageObservationGroups);
         return averageObservationGroups;
     }
 
+    public ArrayList<ObservationGroup> getMorningEveningObservationGroups() {
+        ArrayList<ObservationGroup> observationGroups = new ArrayList<>();
+        for (int i = 0; i < getSurveyLengthDays(); i++) {
+            observationGroups.add(new ObservationGroup(i, MILLIS_IN_HOUR * 7, MILLIS_IN_HOUR * 3, "Morning"));
+            observationGroups.add(new ObservationGroup(i, MILLIS_IN_HOUR * 16, MILLIS_IN_HOUR * 3, "Evening"));
+        }
 
+        for (Observation observation : observations) {
+            for (ObservationGroup observationGroup : observationGroups) {
+                observationGroup.add(observation);
+            }
+        }
+        return observationGroups;
+    }
+
+    private int getSurveyLengthDays() {
+        // get the number of days in the survey.  Just use the last observation group for this.
+        ArrayList<ObservationGroup> observationGroups = allGroups.get(ObservationGroup.ObservationGroupType.FIFTEEN_MINUTES);
+        return observationGroups.get(observationGroups.size() - 1).getDay() + 1;
+    }
+
+    public ArrayList<ObservationGroup> getPeaks(ObservationGroup.ObservationGroupType groupType, DirectionOption directionOption) {
+        final ArrayList<ObservationGroup> observationGroups = allGroups.get(groupType);
+        final ArrayList<ObservationGroup> peakGroups = new ArrayList<>();
+        ObservationGroup peak = null;
+        int day = 0;
+        for (ObservationGroup observationGroup : observationGroups) {
+            if (observationGroup.getDay() > day) {
+                day++;
+                peakGroups.add(peak);
+                peak = null;
+            }
+            if (peak == null || getDirectionCount(observationGroup, directionOption) > getDirectionCount(peak, directionOption)) {
+                peak = observationGroup;
+            }
+        }
+        if (peak != null && !peakGroups.contains(peak)) {
+            peakGroups.add(peak);
+        }
+        return peakGroups;
+    }
+
+    private long getDirectionCount(ObservationGroup group, DirectionOption directionOption) {
+        long count;
+        switch (directionOption) {
+            case A: count = group.getCarCountA();
+                break;
+            case B: count = group.getCarCountB();
+                break;
+            case BOTH: count = group.getCarCount();
+                break;
+            default: throw new RuntimeException("Invalid DirectionOption");
+        }
+        return count;
+    }
 }

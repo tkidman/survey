@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import tkidman.tracar.domain.Observation;
 import tkidman.tracar.domain.ObservationGroup;
 import tkidman.tracar.domain.Survey;
 
@@ -31,5 +32,17 @@ public class TracarTest {
         Assert.assertEquals(1, secondDay.getCarCount());
         Assert.assertEquals(1, secondDay.getCarCountA());
         Assert.assertEquals(0, secondDay.getCarCountB());
+    }
+
+    public void testSpeedAndDistance() {
+        Observation previous = new Observation(0, 0, true, 60, 0);
+        final Tracar.RawObservation rawObservation = new Tracar.RawObservation();
+        rawObservation.firstA = "A" + Integer.toString(Survey.MILLIS_IN_HOUR);
+        rawObservation.secondA = "A" + Integer.toString(Survey.MILLIS_IN_HOUR + 150); // 150 millis time difference over 2.5 metres should give a speed of 60 kmph.
+
+        Observation observation = rawObservation.createObservation(previous);
+        Assert.assertEquals(observation.getSpeedInKmph(), 60.0);
+        // 1 hour behind the previous observation, so we should travel 60000 metres at 60 kmph.
+        Assert.assertEquals(observation.getMetresBehind(), 60000.0);
     }
 }

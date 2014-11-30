@@ -17,7 +17,7 @@ public class Tracar {
 
     public void createReport() {
         try {
-            Stream<String> lines = Files.lines(Paths.get("Vehicle Survey Coding Challenge sample data.txt"));
+            Stream<String> lines = Files.lines(Paths.get("sample_data.txt"));
             Survey survey = loadSurvey(lines);
             new CsvReport().report(survey);
         } catch (IOException e) {
@@ -25,7 +25,7 @@ public class Tracar {
         }
     }
 
-    public Survey loadSurvey(Stream<String> lines) {
+    Survey loadSurvey(Stream<String> lines) {
         RawObservationReference rawObservationReference = new RawObservationReference();
         rawObservationReference.rawObservation = new RawObservation();
         ArrayList<Observation> observations = new ArrayList<>();
@@ -45,8 +45,12 @@ public class Tracar {
         }
     }
 
-    private static final class RawObservation {
-        private String firstA, secondA, firstB, secondB;
+    // Package private for tests
+    static final class RawObservation {
+        private static final double DISTANCE_BETWEEN_WHEELS_KILOMETRES = 0.0025;
+        private static final int METRES_IN_KILOMETRE = 1000;
+
+        String firstA, secondA, firstB, secondB;
 
         /**
          * Returns true when the raw observation is complete
@@ -73,7 +77,7 @@ public class Tracar {
             return false;
         }
 
-        private Observation createObservation(Observation previous) {
+        Observation createObservation(Observation previous) {
             boolean directionA = firstB == null;
             int millisSinceMidnightFirstA = Integer.parseInt(firstA.substring(1));
             int millisSinceMidnightSecondA = Integer.parseInt(secondA.substring(1));
@@ -89,14 +93,14 @@ public class Tracar {
 
             // perform our approximate speed calculation
             // millis to travel 2.5 meters.
-            double speedInKmph = (Survey.MILLIS_IN_HOUR / (millisSinceMidnightSecondA - millisSinceMidnightFirstA)) * 0.0025;
+            double speedInKmph = (Survey.MILLIS_IN_HOUR / (millisSinceMidnightSecondA - millisSinceMidnightFirstA)) * DISTANCE_BETWEEN_WHEELS_KILOMETRES;
 
             // now calculate our distance from the car in front
             double metresBehindPrevious = 0;
             if (previous != null) {
-                long differenceInTimeMillis = millisSinceMidnightFirstA - previous.getObservationTimeMillis() + (day - previous.getDay() * Survey.MILLIS_IN_DAY);
+                long differenceInTimeMillis = millisSinceMidnightFirstA - previous.getObservationTimeMillis() + ((day - previous.getDay()) * Survey.MILLIS_IN_DAY);
                 // so how far would be travelled over the difference in time by the second car at the speed when it made the obs?
-                metresBehindPrevious = (speedInKmph / (Survey.MILLIS_IN_HOUR / differenceInTimeMillis)) * 1000;
+                metresBehindPrevious = (speedInKmph / (Survey.MILLIS_IN_HOUR / differenceInTimeMillis)) * METRES_IN_KILOMETRE;
             }
 
             return new Observation(day, millisSinceMidnightFirstA, directionA, speedInKmph, metresBehindPrevious);
