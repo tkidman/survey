@@ -1,5 +1,8 @@
 package tkidman.tracar.domain;
 
+/**
+ * Simple bean to hold observation data in a nice format.  Immutable.
+ */
 public class Observation implements Comparable<Observation> {
     private final int day;
     private final int observationTimeMillis;

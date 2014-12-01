@@ -35,18 +35,32 @@ public class SurveyTest {
     }
 
     public void testAverageAcrossDays() {
-        Observation observation1 = new Observation(0, 10 * Survey.MILLIS_IN_MINUTE, true, 100, 1);
-        Observation observation2 = new Observation(1, 10 * Survey.MILLIS_IN_MINUTE, true, 50, 3);
+        // both observations occur in the second hour, one on the first day, one on the second.
+        Observation observation1 = new Observation(0, 70 * Survey.MILLIS_IN_MINUTE, true, 100, 1);
+        Observation observation2 = new Observation(1, 70 * Survey.MILLIS_IN_MINUTE, true, 50, 3);
         ArrayList<Observation> observations = new ArrayList<>(Arrays.asList(observation1, observation2));
         Survey survey = new Survey(observations);
         ArrayList<ObservationGroup> groups = survey.getAverageOverDaysObservationGroups(ObservationGroup.ObservationGroupType.ONE_HOUR);
 
         ObservationGroup firstHourAverage = groups.get(0);
-        Assert.assertEquals(firstHourAverage.getCarCount(), 1);
-        Assert.assertEquals(firstHourAverage.getCarCountA(), 1);
+        Assert.assertEquals(firstHourAverage.getCarCount(), 0);
+        Assert.assertEquals(firstHourAverage.getCarCountA(), 0);
         Assert.assertEquals(firstHourAverage.getCarCountB(), 0);
-        Assert.assertEquals(firstHourAverage.getAverageSpeed(), 75.0);
-        Assert.assertEquals(firstHourAverage.getAverageMetresBehind(), 2.0);
+        Assert.assertEquals(firstHourAverage.getAverageSpeed(), 0.0);
+        Assert.assertEquals(firstHourAverage.getAverageMetresBehind(), 0.0);
+        Assert.assertEquals(firstHourAverage.getMinMetresBehind(), -1.0);
+        Assert.assertEquals(firstHourAverage.getMaxMetresBehind(), -1.0);
+        Assert.assertEquals(firstHourAverage.getPeriodStartMillis(), 0);
+
+        ObservationGroup secondHourAverage = groups.get(1);
+        Assert.assertEquals(secondHourAverage.getCarCount(), 1);
+        Assert.assertEquals(secondHourAverage.getCarCountA(), 1);
+        Assert.assertEquals(secondHourAverage.getCarCountB(), 0);
+        Assert.assertEquals(secondHourAverage.getAverageSpeed(), 75.0);
+        Assert.assertEquals(secondHourAverage.getAverageMetresBehind(), 2.0);
+        Assert.assertEquals(secondHourAverage.getMinMetresBehind(), 1.0);
+        Assert.assertEquals(secondHourAverage.getMaxMetresBehind(), 3.0);
+        Assert.assertEquals(secondHourAverage.getPeriodStartMillis(), Survey.MILLIS_IN_HOUR);
     }
 
     public void testMorningEvening() {

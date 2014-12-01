@@ -3,6 +3,7 @@ package tkidman.tracar.app;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 
 import tkidman.tracar.domain.ObservationGroup;
@@ -26,7 +27,7 @@ public class CsvReport {
 
     private void writeTotalCarsByPeriodReport(final Survey survey, final ObservationGroup.ObservationGroupType observationGroupType) {
         ArrayList<ObservationGroup> observationGroups = survey.getObservationGroups(observationGroupType);
-        writeObservationGroups(observationGroups, "report_totals_" + observationGroupType.name().toLowerCase() + ".csv");
+        writeObservationGroups(observationGroups, "totals_" + observationGroupType.name().toLowerCase() + ".csv");
     }
 
     private void writeObservationGroups(ArrayList<ObservationGroup> observationGroups, String reportName) {
@@ -38,10 +39,10 @@ public class CsvReport {
                             "Total Cars" + SEPARATOR +
                             "Cars A" + SEPARATOR +
                             "Cars B" + SEPARATOR +
-                            "Average speed" + SEPARATOR +
-                            "Average distance" + SEPARATOR +
-                            "Min distance" + SEPARATOR +
-                            "Max distance"
+                            "Average speed (kmph)" + SEPARATOR +
+                            "Average distance (m)" + SEPARATOR +
+                            "Min distance (m)" + SEPARATOR +
+                            "Max distance (m)"
             );
 
             for (ObservationGroup observationGroup : observationGroups) {
@@ -49,10 +50,10 @@ public class CsvReport {
                                 observationGroup.getCarCount() + SEPARATOR +
                                 observationGroup.getCarCountA() + SEPARATOR +
                                 observationGroup.getCarCountB() + SEPARATOR +
-                                observationGroup.getAverageSpeed() + SEPARATOR +
-                                observationGroup.getAverageMetresBehind() + SEPARATOR +
-                                observationGroup.getMinMetresBehind() + SEPARATOR +
-                                observationGroup.getMaxMetresBehind()
+                                formatDouble(observationGroup.getAverageSpeed()) + SEPARATOR +
+                                formatDouble(observationGroup.getAverageMetresBehind()) + SEPARATOR +
+                                formatDouble(observationGroup.getMinMetresBehind()) + SEPARATOR +
+                                formatDouble(observationGroup.getMaxMetresBehind())
                 );
             }
             printWriter.close();
@@ -70,7 +71,7 @@ public class CsvReport {
     private void writeAverages(Survey survey) {
         for (ObservationGroup.ObservationGroupType observationGroupType : ObservationGroup.ObservationGroupType.values()) {
             ArrayList<ObservationGroup> observationGroups = survey.getAverageOverDaysObservationGroups(observationGroupType);
-            writeObservationGroups(observationGroups, "report_averages_" + observationGroupType.name().toLowerCase() + ".csv");
+            writeObservationGroups(observationGroups, "averages_" + observationGroupType.name().toLowerCase() + ".csv");
         }
     }
 
@@ -78,5 +79,9 @@ public class CsvReport {
         // Just writing out one peak type as an example.
         ArrayList<ObservationGroup> observationGroups = survey.getPeaks(ObservationGroup.ObservationGroupType.THIRTY_MINUTES, Survey.DirectionOption.B);
         writeObservationGroups(observationGroups, "thirty_minute_daily_peak_direction_b.csv");
+    }
+
+    private String formatDouble(double num) {
+        return NumberFormat.getNumberInstance().format(num);
     }
 }

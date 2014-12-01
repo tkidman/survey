@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+/**
+ * This represents the API of the survey, and provides methods to interact with observations and groups.
+ */
 public class Survey {
     public enum DirectionOption {
         A, B, BOTH;
@@ -17,6 +20,9 @@ public class Survey {
     private ArrayList<Observation> observations;
     private HashMap<ObservationGroup.ObservationGroupType, ArrayList<ObservationGroup>> allGroups = new HashMap<>();
 
+    /**
+     * Creates all default groups, and adds observations to them.
+     */
     public Survey(ArrayList<Observation> observations) {
         Collections.sort(observations);
         for (ObservationGroup.ObservationGroupType observationGroupType : ObservationGroup.ObservationGroupType.values()) {
@@ -34,7 +40,8 @@ public class Survey {
                 while (!latestObservationGroup.add(observation)) {
                     // we need to create a new group to handle this observation.
                     ObservationGroup observationGroup = new ObservationGroup(latestObservationGroup);
-                    System.out.println("Creating new " + observationGroup.getName() + " group for observation: " + observation.getDay() + " " + observation.getObservationTimeMillis() + ", new group start: " + observationGroup.getTimeReadable());
+                    // commenting out for now - would have used LOG.debug if external libraries were allowed.
+//                    System.out.println("Creating new " + observationGroup.getName() + " group for observation: " + observation.getDay() + " " + observation.getObservationTimeMillis() + ", new group start: " + observationGroup.getTimeReadable());
                     groups.add(observationGroup);
                     latestObservationGroup = observationGroup;
                 }
@@ -42,10 +49,16 @@ public class Survey {
         }
     }
 
+    /**
+     *  Returns the ordered groups of the type specified.
+     */
     public ArrayList<ObservationGroup> getObservationGroups(ObservationGroup.ObservationGroupType groupType) {
         return allGroups.get(groupType);
     }
 
+    /**
+     * Creates groups representing the average for the same period of each day over the length of the survey.
+     */
     public ArrayList<ObservationGroup> getAverageOverDaysObservationGroups(ObservationGroup.ObservationGroupType groupType) {
         ArrayList<ObservationGroup> observationGroups = allGroups.get(groupType);
         HashMap<Integer, ObservationGroup> summedObservationGroups = new HashMap<>();
@@ -67,6 +80,9 @@ public class Survey {
         return averageObservationGroups;
     }
 
+    /**
+     * returns groups for 2 custom time periods - morning (7:00 - 10:00) and evening (16:00 - 19:00)
+     */
     public ArrayList<ObservationGroup> getMorningEveningObservationGroups() {
         ArrayList<ObservationGroup> observationGroups = new ArrayList<>();
         for (int i = 0; i < getSurveyLengthDays(); i++) {
@@ -88,6 +104,9 @@ public class Survey {
         return observationGroups.get(observationGroups.size() - 1).getDay() + 1;
     }
 
+    /**
+     * Returns the peak observation group per day in the survey for the direction option provided.
+     */
     public ArrayList<ObservationGroup> getPeaks(ObservationGroup.ObservationGroupType groupType, DirectionOption directionOption) {
         final ArrayList<ObservationGroup> observationGroups = allGroups.get(groupType);
         final ArrayList<ObservationGroup> peakGroups = new ArrayList<>();

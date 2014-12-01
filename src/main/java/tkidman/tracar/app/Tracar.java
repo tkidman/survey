@@ -9,15 +9,24 @@ import java.util.stream.Stream;
 import tkidman.tracar.domain.Observation;
 import tkidman.tracar.domain.Survey;
 
+/**
+ * Tracar (Track - Car, the Car Tracker!)
+ * The entry point into the application, responsible for parsing the input file and turning it into
+ * a sensible format for the domain.
+ */
 public class Tracar {
 
     public static void main(String[] args) {
-        new Tracar().createReport();
+        String filePath = "sample_data.txt";
+        if (args.length == 1) {
+            filePath = args[0];
+        }
+        new Tracar().createReport(filePath);
     }
 
-    public void createReport() {
+    void createReport(String filePath) {
         try {
-            Stream<String> lines = Files.lines(Paths.get("sample_data.txt"));
+            Stream<String> lines = Files.lines(Paths.get(filePath));
             Survey survey = loadSurvey(lines);
             new CsvReport().report(survey);
         } catch (IOException e) {
@@ -99,7 +108,7 @@ public class Tracar {
             double metresBehindPrevious = 0;
             if (previous != null) {
                 long differenceInTimeMillis = millisSinceMidnightFirstA - previous.getObservationTimeMillis() + ((day - previous.getDay()) * Survey.MILLIS_IN_DAY);
-                // so how far would be travelled over the difference in time by the second car at the speed when it made the obs?
+                // so how far would be travelled over the difference in time by the second car at the speed when it made the observation?
                 metresBehindPrevious = (speedInKmph / (Survey.MILLIS_IN_HOUR / differenceInTimeMillis)) * METRES_IN_KILOMETRE;
             }
 

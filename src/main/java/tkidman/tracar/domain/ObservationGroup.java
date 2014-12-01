@@ -29,18 +29,21 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
 
     private int day;
     private int periodStartMillis;
+    private int periodLengthMillis;
     private long carCount;
     private long carCountA;
     private double speedTotal;
     private double minMetresBehind = UNINITIALISED;
     private double maxMetresBehind = UNINITIALISED;
     private double metresBehindTotal;
-    private int periodLengthMillis;
     private String name;
     private boolean averageAcrossDays = false;
 
     public ObservationGroup() {}
 
+    /**
+     * Sets up the first observation group in a series.
+     */
     public ObservationGroup(final ObservationGroupType observationGroupType) {
         this(0, 0, observationGroupType.periodLengthMillis, observationGroupType.name().toLowerCase());
         if (averageAcrossDays) {
@@ -48,6 +51,9 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
         }
     }
 
+    /**
+     * Sets up a new observation group after the previous.
+     */
     public ObservationGroup(final ObservationGroup previous) {
         this.periodStartMillis = previous.getPeriodEndMillis() + 1;
         this.day = previous.day;
@@ -66,6 +72,9 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
         this.name = name;
     }
 
+    /**
+     * Initialises an observation group to be used as an average across days.
+     */
     public ObservationGroup initialiseForAverage(final ObservationGroup observationGroup) {
         this.name = observationGroup.name;
         this.periodStartMillis = observationGroup.periodStartMillis;
@@ -98,17 +107,26 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
         return carCount - carCountA;
     }
 
+    /**
+     * Sums the data from the passed in observation group to this observation group.  Useful when calculating an
+     * average across days.
+     */
     public void plus(final ObservationGroup observationGroup) {
         carCountA += observationGroup.carCountA;
         carCount += observationGroup.carCount;
         speedTotal += observationGroup.speedTotal;
         metresBehindTotal += observationGroup.metresBehindTotal;
+        setMetresBehindValues(observationGroup.getMaxMetresBehind(), observationGroup.getMinMetresBehind());
     }
 
     public int getDay() {
         return day;
     }
 
+    /**
+     * Divides the data in this observation group by a number of days to give an average.  This observation group
+     * needs to have been summed across days for this method to make sense.
+     */
     public void divide(final int numDays) {
         carCountA /= numDays;
         carCount /= numDays;
@@ -165,15 +183,19 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
             }
             speedTotal += observation.getSpeedInKmph();
             metresBehindTotal += observation.getMetresBehind();
-            if (minMetresBehind == UNINITIALISED || minMetresBehind > observation.getMetresBehind()) {
-                minMetresBehind = observation.getMetresBehind();
-            }
-            if (maxMetresBehind == UNINITIALISED || maxMetresBehind < observation.getMetresBehind()) {
-                maxMetresBehind = observation.getMetresBehind();
-            }
+            setMetresBehindValues(observation.getMetresBehind(), observation.getMetresBehind());
             return true;
         }
         return false;
+    }
+
+    private void setMetresBehindValues(final double otherMaxMetresBehind, final double otherMinMetresBehind) {
+        if (minMetresBehind == UNINITIALISED || (minMetresBehind > otherMinMetresBehind && otherMinMetresBehind != UNINITIALISED)) {
+            minMetresBehind = otherMinMetresBehind;
+        }
+        if (maxMetresBehind == UNINITIALISED || (maxMetresBehind < otherMaxMetresBehind && otherMaxMetresBehind != UNINITIALISED)) {
+            maxMetresBehind = otherMaxMetresBehind;
+        }
     }
 
     @Override
