@@ -48,8 +48,8 @@ public class SurveyTest {
         Assert.assertEquals(firstHourAverage.getCarCountB(), 0);
         Assert.assertEquals(firstHourAverage.getAverageSpeed(), 0.0);
         Assert.assertEquals(firstHourAverage.getAverageMetresBehind(), 0.0);
-        Assert.assertEquals(firstHourAverage.getMinMetresBehind(), -1.0);
-        Assert.assertEquals(firstHourAverage.getMaxMetresBehind(), -1.0);
+        Assert.assertEquals(firstHourAverage.getMinSpeed(), -1.0);
+        Assert.assertEquals(firstHourAverage.getMaxSpeed(), -1.0);
         Assert.assertEquals(firstHourAverage.getPeriodStartMillis(), 0);
 
         ObservationGroup secondHourAverage = groups.get(1);
@@ -58,8 +58,8 @@ public class SurveyTest {
         Assert.assertEquals(secondHourAverage.getCarCountB(), 0);
         Assert.assertEquals(secondHourAverage.getAverageSpeed(), 75.0);
         Assert.assertEquals(secondHourAverage.getAverageMetresBehind(), 2.0);
-        Assert.assertEquals(secondHourAverage.getMinMetresBehind(), 1.0);
-        Assert.assertEquals(secondHourAverage.getMaxMetresBehind(), 3.0);
+        Assert.assertEquals(secondHourAverage.getMinSpeed(), 50.0);
+        Assert.assertEquals(secondHourAverage.getMaxSpeed(), 100.0);
         Assert.assertEquals(secondHourAverage.getPeriodStartMillis(), Survey.MILLIS_IN_HOUR);
     }
 

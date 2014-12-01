@@ -33,8 +33,8 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
     private long carCount;
     private long carCountA;
     private double speedTotal;
-    private double minMetresBehind = UNINITIALISED;
-    private double maxMetresBehind = UNINITIALISED;
+    private double minSpeed = UNINITIALISED;
+    private double maxSpeed = UNINITIALISED;
     private double metresBehindTotal;
     private String name;
     private boolean averageAcrossDays = false;
@@ -93,7 +93,7 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
         LocalTime startTime = LocalTime.ofNanoOfDay(0).plus(periodStartMillis, ChronoUnit.MILLIS);
         String timeDisplay = startTime.format(DateTimeFormatter.ISO_TIME);
         if (!averageAcrossDays) {
-            String dayDisplay = DayOfWeek.of((day % 7) + 1).getDisplayName(TextStyle.NARROW, Locale.ENGLISH);
+            String dayDisplay = DayOfWeek.of((day % 7) + 1).getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
             timeDisplay = dayDisplay + " " + timeDisplay;
         }
         return timeDisplay;
@@ -116,7 +116,7 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
         carCount += observationGroup.carCount;
         speedTotal += observationGroup.speedTotal;
         metresBehindTotal += observationGroup.metresBehindTotal;
-        setMetresBehindValues(observationGroup.getMaxMetresBehind(), observationGroup.getMinMetresBehind());
+        setSpeedValues(observationGroup.getMaxSpeed(), observationGroup.getMinSpeed());
     }
 
     public int getDay() {
@@ -148,12 +148,12 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
         return metresBehindTotal / carCount;
     }
 
-    public double getMinMetresBehind() {
-        return minMetresBehind;
+    public double getMinSpeed() {
+        return minSpeed;
     }
 
-    public double getMaxMetresBehind() {
-        return maxMetresBehind;
+    public double getMaxSpeed() {
+        return maxSpeed;
     }
 
     public int getPeriodLengthMillis() {
@@ -183,18 +183,18 @@ public class ObservationGroup implements Comparable<ObservationGroup> {
             }
             speedTotal += observation.getSpeedInKmph();
             metresBehindTotal += observation.getMetresBehind();
-            setMetresBehindValues(observation.getMetresBehind(), observation.getMetresBehind());
+            setSpeedValues(observation.getSpeedInKmph(), observation.getSpeedInKmph());
             return true;
         }
         return false;
     }
 
-    private void setMetresBehindValues(final double otherMaxMetresBehind, final double otherMinMetresBehind) {
-        if (minMetresBehind == UNINITIALISED || (minMetresBehind > otherMinMetresBehind && otherMinMetresBehind != UNINITIALISED)) {
-            minMetresBehind = otherMinMetresBehind;
+    private void setSpeedValues(final double otherMaxSpeed, final double otherMinSpeed) {
+        if (minSpeed == UNINITIALISED || (minSpeed > otherMinSpeed && otherMinSpeed != UNINITIALISED)) {
+            minSpeed = otherMinSpeed;
         }
-        if (maxMetresBehind == UNINITIALISED || (maxMetresBehind < otherMaxMetresBehind && otherMaxMetresBehind != UNINITIALISED)) {
-            maxMetresBehind = otherMaxMetresBehind;
+        if (maxSpeed == UNINITIALISED || (maxSpeed < otherMaxSpeed && otherMaxSpeed != UNINITIALISED)) {
+            maxSpeed = otherMaxSpeed;
         }
     }
 

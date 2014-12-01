@@ -3,7 +3,6 @@ package tkidman.tracar.app;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 
 import tkidman.tracar.domain.ObservationGroup;
@@ -40,9 +39,9 @@ public class CsvReport {
                             "Cars A" + SEPARATOR +
                             "Cars B" + SEPARATOR +
                             "Average speed (kmph)" + SEPARATOR +
-                            "Average distance (m)" + SEPARATOR +
-                            "Min distance (m)" + SEPARATOR +
-                            "Max distance (m)"
+                            "Min speed (kmph)" + SEPARATOR +
+                            "Max speed (kmph)" + SEPARATOR +
+                            "Average distance (m)"
             );
 
             for (ObservationGroup observationGroup : observationGroups) {
@@ -51,9 +50,9 @@ public class CsvReport {
                                 observationGroup.getCarCountA() + SEPARATOR +
                                 observationGroup.getCarCountB() + SEPARATOR +
                                 formatDouble(observationGroup.getAverageSpeed()) + SEPARATOR +
-                                formatDouble(observationGroup.getAverageMetresBehind()) + SEPARATOR +
-                                formatDouble(observationGroup.getMinMetresBehind()) + SEPARATOR +
-                                formatDouble(observationGroup.getMaxMetresBehind())
+                                formatDouble(observationGroup.getMinSpeed()) + SEPARATOR +
+                                formatDouble(observationGroup.getMaxSpeed()) + SEPARATOR +
+                                formatDouble(observationGroup.getAverageMetresBehind())
                 );
             }
             printWriter.close();
@@ -82,6 +81,7 @@ public class CsvReport {
     }
 
     private String formatDouble(double num) {
-        return NumberFormat.getNumberInstance().format(num);
+        // print to 2 decimal places
+        return String.format("%.2f", num);
     }
 }

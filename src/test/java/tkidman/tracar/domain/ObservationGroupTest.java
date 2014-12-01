@@ -28,7 +28,7 @@ public class ObservationGroupTest {
 
     public void testGetTimeReadable() {
         ObservationGroup observationGroup = new ObservationGroup(0, Survey.MILLIS_IN_MINUTE * 15, Survey.MILLIS_IN_MINUTE * 15, "test");
-        Assert.assertEquals(observationGroup.getTimeReadable(), "M 00:15:00");
+        Assert.assertEquals(observationGroup.getTimeReadable(), "Mon 00:15:00");
     }
 
     public void testCompare() {
